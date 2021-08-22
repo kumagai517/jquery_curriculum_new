@@ -28,6 +28,132 @@
     <script src="../../common/js/jquery.js"></script>
     <script src="./js/appid.js"></script>
     <script>
+      $(function() {
+        var keyword;
+        $('.search__btn').on('click',function(){
+          keyword = $('[data-js = search-word]').val();
+          console.log(keyword);
+          ajaxProcessing(1, keyword);
+        });
+
+        $('body').on('click', '[data-js = page-prev]', function(e){
+          e.preventDefault();
+          if ($('[data-js = page-prev]').hasClass('disabled')){
+            return false;
+          };
+          ajaxProcessing(pageNum - 1, keyword);
+        });
+        $('body').on('click', '[data-js = page-next]', function(e){
+          e.preventDefault();
+          if ($('[data-js = page-next]').hasClass('disabled')){
+            return false;
+          };
+          ajaxProcessing(pageNum + 1, keyword);
+        });
+
+        //関数定義
+        function ajaxProcessing(page, keyword){
+          $.ajax({
+            url: 'https://app.rakuten.co.jp/services/api/BooksTotal/Search/20130522',
+            type: 'GET',
+            datatype: 'json',
+            data: {
+            // 「区分:サービス固有パラメーター」を確認して、必要な情報をdata内に入れましょう。
+            applicationId: appId, //(今回はこの変数をIDとして使用します) ※メンターから別途渡されるファイルを読み込んでください。
+            booksGenreId: '001',
+            keyword: keyword,
+            hits: 20,
+            page: page,
+            },
+          }).done(function(responsData) {
+          // この中にデータ取得後の動きを記述していきます。
+              //console.log(responsData);
+              reset();
+              $(window).scrollTop();
+              pageNum = responsData.page;
+              if (responsData.count > 0){
+                doneProcessing(responsData);
+                pagerDisplay(responsData);
+                pagerDisabled(page, responsData);
+              } else {
+                notFound();
+              }
+          }).fail(function(dataNone){
+            reset();
+            console.log(dataNone.status);
+            failProcessing(dataNone.status);
+          })
+        };
+
+        function reset(){
+          $('.pager, .lists__item, .errorMessage').remove();
+        };
+        //通信成功時
+        function doneProcessing(responsData){
+          var list ='';
+          $.each(responsData.Items,function(index,item){
+            list +=
+              '<li class="lists__item">'+
+                '<div class="lists__item__inner">'+
+                  '<a href="'+ item.Item.itemUrl +'" class="lists__item__link" target="_blank">'+
+                    '<img src="'+ item.Item.mediumImageUrl +'" class="lists__item__img" alt="">'+
+                    '<p class="lists__item__detail">作品名：'+ item.Item.title +'</p>'+
+                    '<p class="lists__item__detail">作者　：'+ item.Item.author +'</p>'+
+                    '<p class="lists__item__detail">出版社：'+ item.Item.publisherName +'</p>'+
+                  '</a>'+
+                '</div>'+
+              '</li>'
+          });
+          //console.log(list);
+          $('.lists').append(list);
+        };
+        //ページャ表示
+        function pagerDisplay(responsData){
+          var pager = $(
+            '<div class="pager" data-js="pager">'+
+              '<div class="counter">'+
+                '<span class="counter-current">'+ responsData.page +'</span>'+
+                '/'+
+                '<span class="counter-all">'+ responsData.pageCount +'</span>'+
+              '</div>'+
+              '<div class="btn-wrapper">'+
+                '<a class="btn-item" data-js="page-prev" href="">'+ '前へ' +'</a>'+
+                '<a class="btn-item" data-js="page-next" href="">'+ '次へ' +'</a>'+
+              '</div>'+
+            '</div>'
+          );
+          $('.lists').after(pager);
+        };
+        //ページャ非活性
+        function pagerDisabled(page,returnData){
+          if (page === 1 ){
+            $('[data-js = page-prev]').addClass('disabled');
+          };
+          if (page === returnData.pageCount){
+            $('.btn-item[data-js = page-next]').addClass('disabled');
+          };
+        }
+        //通信失敗時
+        function notFound(){
+          $('.message').prepend('<p class="errorMessage">検索結果が見つかりませんでした。<br>別のキーワードで検索して下さい。</p>');
+        };
+        function failProcessing(errorNumber){
+          switch( errorNumber ){
+            case 0:
+              $('.message').prepend('<p class="errorMessage">通信に失敗しました。インターネットの接続をご確認ください。</P>');
+              break;
+            case 400:
+              $('.message').prepend('<p class="errorMessage">検索文字が入力されていません。</P>');
+              break;
+            case 429:
+              $('.message').prepend('<p class="errorMessage">リクエスト過多です。しばらく時間を置いてからお試しください。</P>');
+              break;
+            case 500:
+            $('.message').prepend('<p class="errorMessage">システムエラー。長時間続くようであれば、<a href="https://webservice.faq.rakuten.net/hc/ja/requests/new">こちらよりごお問い合わせください。</a></P>');
+              break;
+          };
+        }
+      })
       // 楽天ブックスの総合検索APIを使って製作してください。
       // answerの挙動を良く見てね！
       //
