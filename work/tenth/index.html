@@ -91,15 +91,15 @@
         //通信成功時
         function doneProcessing(responsData){
           var list ='';
-          $.each(responsData.Items,function(index,item){
+          $.each(responsData.Items,function(index,element){
             list +=
               '<li class="lists__item">'+
                 '<div class="lists__item__inner">'+
-                  '<a href="'+ item.Item.itemUrl +'" class="lists__item__link" target="_blank">'+
-                    '<img src="'+ item.Item.mediumImageUrl +'" class="lists__item__img" alt="">'+
-                    '<p class="lists__item__detail">作品名：'+ item.Item.title +'</p>'+
-                    '<p class="lists__item__detail">作者　：'+ item.Item.author +'</p>'+
-                    '<p class="lists__item__detail">出版社：'+ item.Item.publisherName +'</p>'+
+                  '<a href="'+ element.Item.itemUrl +'" class="lists__item__link" target="_blank">'+
+                    '<img src="'+ element.Item.mediumImageUrl +'" class="lists__item__img" alt="">'+
+                    '<p class="lists__item__detail">作品名：'+ element.Item.title +'</p>'+
+                    '<p class="lists__item__detail">作者　：'+ element.Item.author +'</p>'+
+                    '<p class="lists__item__detail">出版社：'+ element.Item.publisherName +'</p>'+
                   '</a>'+
                 '</div>'+
               '</li>'
@@ -125,12 +125,12 @@
           $('.lists').after(pager);
         };
         //ページャ非活性
-        function pagerDisabled(page,returnData){
+        function pagerDisabled(page,responsData){
           if (page === 1 ){
             $('[data-js = page-prev]').addClass('disabled');
           };
-          if (page === returnData.pageCount){
-            $('.btn-item[data-js = page-next]').addClass('disabled');
+          if (page === responsData.pageCount){
+            $('[data-js = page-next]').addClass('disabled');
           };
         }
         //通信失敗時
